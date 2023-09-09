@@ -1,9 +1,10 @@
 package regression
 
 import (
-	"github.com/stretchr/testify/assert"
 	"math"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // gradient descent
@@ -26,7 +27,7 @@ func TestPolynomial_valueOfCurve(t *testing.T) {
 		p.Coefficients[1][0]*math.Pow(features[0], 2) + p.Coefficients[1][1]*math.Pow(features[1], 2) + p.Coefficients[1][2]*math.Pow(features[2], 2) +
 		p.Coefficients[2][0]*math.Pow(features[0], 3) + p.Coefficients[2][1]*math.Pow(features[1], 3) + p.Coefficients[2][2]*math.Pow(features[2], 3)
 
-	assert.Equal(t, expectedValue, p.valueOfCurve(features))
+	assert.Equal(t, expectedValue, p.Predict(features))
 }
 
 func TestPolynomial_derivativeOfCostFunction(t *testing.T) {

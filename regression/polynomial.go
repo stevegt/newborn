@@ -35,7 +35,7 @@ func (p *Polynomial) derivativeOfCostFunction(features [][]float64, values []flo
 
 	sigma := float64(0)
 	for i := 0; i < m; i++ {
-		sigma += p.valueOfCurve(features[i]) - values[i]
+		sigma += p.Predict(features[i]) - values[i]
 	}
 
 	d_bias := float64(1) / float64(m) * sigma
@@ -47,9 +47,9 @@ func (p *Polynomial) derivativeOfCostFunction(features [][]float64, values []flo
 		for j := range d {
 			sigma := float64(0)
 			for i := 0; i < m; i++ {
-				sigma += (p.valueOfCurve(features[i]) - values[i]) * math.Pow(features[i][j], float64(k+1))
+				sigma += (p.Predict(features[i]) - values[i]) * math.Pow(features[i][j], float64(k+1))
 			}
-			d[j] = float64(1) / float64(m) * (sigma + lambda * p.Coefficients[k][j])
+			d[j] = float64(1) / float64(m) * (sigma + lambda*p.Coefficients[k][j])
 		}
 		derivatives[k] = d
 	}
@@ -57,7 +57,7 @@ func (p *Polynomial) derivativeOfCostFunction(features [][]float64, values []flo
 	return d_bias, derivatives
 }
 
-func (p *Polynomial) valueOfCurve(features []float64) float64 {
+func (p *Polynomial) Predict(features []float64) float64 {
 	v := p.Bias
 
 	for i, c := range p.Coefficients {

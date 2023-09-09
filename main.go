@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/elahe-dastan/newborn/data"
-	"github.com/elahe-dastan/newborn/knn"
-	"strconv"
+	"math"
+	"math/rand"
+
+	"github.com/stevegt/newborn/regression"
 )
 
 func main() {
@@ -44,46 +45,77 @@ func main() {
 	//		{4, 6, 2}},
 	//}
 
-	//p := regression.New()
-	//features := [][]float64{
-	//	{1, 4},
-	//	{2, 6},
-	//	{3, 8},
-	//	{4, 2},
-	//	{5, 9},
-	//	{6, 1},
-	//	{7, 4},
-	//	{8, 4},
-	//	{9, 3},
-	//	{10, 6},
-	//	{11, 7},
-	//	{12, 0},
-	//}
-	//
-	//// 3x1 + 2x2^2
-	//values := []float64{35, 78, 137, 20, 177, 20, 53, 56, 45, 102, 131, 36}
-	//
-	//p.Train(features, values, 2, 0.00028, 4000, 0)
-	//fmt.Println(p.Bias)
-	//fmt.Println(p.Coefficients)
+	// matrix of {x1, x2, y} where y = 3*x1 + 2*x2^2
+	matrix := [][]float64{
+		{1, 4, 35},
+		{2, 6, 78},
+		{3, 8, 137},
+		{4, 2, 20},
+		{5, 9, 177},
+		{6, 1, 20},
+		{7, 4, 53},
+		{8, 4, 56},
+		{9, 3, 45},
+		{10, 6, 102},
+		{11, 7, 131},
+		{12, 0, 36},
+	}
 
-	headers, content := data.ReadCSVData("./knn/dataset_test.csv")
-	currentData := make([][]float64, len(content[headers[0]]))
-	for i := range currentData {
-		f := make([]float64, len(headers)-1)
-		for j := range f {
-			f[j], _ = strconv.ParseFloat(content[headers[j]][i], 64)
+	// split matrix into features and values
+	features := make([][]float64, len(matrix))
+	values := make([]float64, len(matrix))
+	for i, row := range matrix {
+		features[i] = row[:len(row)-1]
+		values[i] = row[len(row)-1]
+	}
+
+	p := regression.New()
+	p.Train(features, values, 2, 0.00028, 4000, 0)
+	fmt.Println(p.Bias)
+	fmt.Println(p.Coefficients)
+
+	// add a few more features and values to test interpolation,
+	// but don't train on these
+	for i := 0; i < 10; i++ {
+		x1 := rand.Float64()*10 + 1
+		x2 := rand.Float64()*10 + 1
+		y := 3*x1 + 2*x2*x2
+		features = append(features, []float64{x1, x2})
+		values = append(values, y)
+	}
+
+	for i, f := range features {
+		// if we don't have a value for this feature, use NaN
+		var v float64
+		if i < len(values) {
+			v = values[i]
+		} else {
+			v = math.NaN()
 		}
-		currentData[i] = f
+		// show the predicted value for these features
+		result := p.Predict(f)
+		fmt.Println(f, v, result)
 	}
 
-	labels := make([]int, len(content[headers[0]]))
-	for i := range labels {
-		labels[i], _ = strconv.Atoi(content[headers[len(headers)-1]][i])
-	}
+	/*
+		headers, content := data.ReadCSVData("./knn/dataset_test.csv")
+		currentData := make([][]float64, len(content[headers[0]]))
+		for i := range currentData {
+			f := make([]float64, len(headers)-1)
+			for j := range f {
+				f[j], _ = strconv.ParseFloat(content[headers[j]][i], 64)
+			}
+			currentData[i] = f
+		}
 
-	newData := []float64{57.0,1.0,4.0,140.0,192.0,0.0,0.0,148.0,0.0,0.4,2.0,0.0,6.0}
+		labels := make([]int, len(content[headers[0]]))
+		for i := range labels {
+			labels[i], _ = strconv.Atoi(content[headers[len(headers)-1]][i])
+		}
 
-	label := knn.KNN(currentData, labels, newData, 3)
-	fmt.Println(label)
+		newData := []float64{57.0, 1.0, 4.0, 140.0, 192.0, 0.0, 0.0, 148.0, 0.0, 0.4, 2.0, 0.0, 6.0}
+
+		label := knn.KNN(currentData, labels, newData, 3)
+		fmt.Println(label)
+	*/
 }
