@@ -4,6 +4,8 @@ import (
 	"math"
 	"math/rand"
 	"time"
+
+	. "github.com/stevegt/goadapt"
 )
 
 type Polynomial struct {
@@ -35,10 +37,17 @@ func (p *Polynomial) derivativeOfCostFunction(features [][]float64, values []flo
 
 	sigma := float64(0)
 	for i := 0; i < m; i++ {
-		sigma += p.Predict(features[i]) - values[i]
+		fs := features[i]
+		predicted := p.Predict(fs)
+		sigma += predicted - values[i]
+		Assert(!math.IsNaN(sigma), Spf("sigma is NaN, features: %v, value: %f, predicted: %f", fs, values[i], predicted))
+		Assert(!math.IsInf(sigma, 0), Spf("sigma is Inf, features: %v, value: %f, predicted: %f", fs, values[i], predicted))
 	}
 
 	d_bias := float64(1) / float64(m) * sigma
+
+	Assert(!math.IsNaN(d_bias), Spf("d_bias is NaN, sigma: %f", sigma))
+	Assert(!math.IsInf(d_bias, 0), Spf("d_bias is Inf, sigma: %f", sigma))
 
 	derivatives := make([][]float64, len(p.Coefficients))
 
@@ -66,6 +75,9 @@ func (p *Polynomial) Predict(features []float64) float64 {
 		}
 	}
 
+	Assert(!math.IsNaN(v), Spf("v is NaN, Bias: %f, Coefficients: %f", p.Bias, p.Coefficients))
+	Assert(!math.IsInf(v, 0), Spf("v is Inf, Bias: %f, Coefficients: %f", p.Bias, p.Coefficients))
+
 	return v
 }
 
@@ -91,10 +103,18 @@ func (p *Polynomial) setRandomVariables(degree int, numOfVariables int) {
 func (p *Polynomial) gradientDescent(features [][]float64, values []float64, learningRate float64, lambda float64) {
 	d_bias, d_coefficients := p.derivativeOfCostFunction(features, values, lambda)
 	p.Bias -= learningRate * d_bias
+	if math.IsNaN(p.Bias) || math.IsInf(p.Bias, 0) {
+		p.Bias = rand.Float64()
+	}
 
 	for m, c := range p.Coefficients {
 		for n := range c {
 			p.Coefficients[m][n] -= learningRate * d_coefficients[m][n]
+			if math.IsNaN(p.Coefficients[m][n]) || math.IsInf(p.Coefficients[m][n], 0) {
+				p.Coefficients[m][n] = rand.Float64()
+			}
+			Assert(!math.IsNaN(p.Coefficients[m][n]), Spf("p.Coefficients[%d][%d] is NaN, d_bias: %f, d_coefficients: %f", m, n, d_bias, d_coefficients[m][n]))
+			Assert(!math.IsInf(p.Coefficients[m][n], 0), Spf("p.Coefficients[%d][%d] is Inf, d_bias: %f, d_coefficients: %f", m, n, d_bias, d_coefficients[m][n]))
 		}
 	}
 }
