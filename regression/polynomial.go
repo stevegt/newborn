@@ -80,6 +80,8 @@ func (p *Polynomial) Cost(features [][]float64, values []float64, lambda float64
 		errors[i] = predicted - values[i]
 		cost += math.Pow(errors[i], 2)
 	}
+	// The cost is the mean squared error.
+	cost = cost / float64(m)
 
 	// Compute the derivative of the bias cost function.
 	sigma := float64(0)
