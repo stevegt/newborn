@@ -74,8 +74,8 @@ func main() {
 		}
 
 		p := regression.New()
-		dSum, iterations := p.Train(features, values, 2, 0.0001, 99999, 0, .1)
-		fmt.Printf("dSum %f iterations %d\n", dSum, iterations)
+		cost, iterations := p.Train(features, values, 2, 0.0001, 99999, 0, .1)
+		fmt.Printf("cost %f iterations %d\n", cost, iterations)
 		fmt.Println(p.Bias)
 		fmt.Println(p.Coefficients)
 
@@ -140,8 +140,8 @@ func main() {
 		}
 
 		p := regression.New()
-		dSum, iterations := p.Train(features, values, 2, 0.0001, 99999, 0, .1)
-		fmt.Printf("dSum %f iterations %d\n", dSum, iterations)
+		cost, iterations := p.Train(features, values, 2, 0.0001, 99999, 0, .1)
+		fmt.Printf("cost %f iterations %d\n", cost, iterations)
 		fmt.Println(p.Bias)
 		fmt.Println(p.Coefficients)
 

@@ -17,7 +17,7 @@ func New() *Polynomial {
 }
 
 // The model starts to learn
-func (p *Polynomial) Train(features [][]float64, values []float64, degree int, learningRate float64, steps int, lambda, tolerance float64) (dSum float64, i int) {
+func (p *Polynomial) Train(features [][]float64, values []float64, degree int, learningRate float64, steps int, lambda, tolerance float64) (cost float64, i int) {
 	if len(features) != len(values) {
 		panic("number of data and number of values should be the same")
 	}
@@ -27,13 +27,7 @@ func (p *Polynomial) Train(features [][]float64, values []float64, degree int, l
 
 	prevCost := math.MaxFloat64
 	for i = 0; i < steps; i++ {
-		cost, d_bias, d_coefficients := p.gradientDescent(features, values, learningRate, lambda)
-		dSum = math.Abs(d_bias)
-		for _, c := range d_coefficients {
-			for _, d := range c {
-				dSum += math.Abs(d)
-			}
-		}
+		cost, _, _ = p.gradientDescent(features, values, learningRate, lambda)
 		dCost := math.Abs(cost - prevCost)
 		if dCost < tolerance {
 			break
