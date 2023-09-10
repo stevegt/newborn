@@ -53,14 +53,14 @@ func TestPolynomial_derivativeOfCostFunction(t *testing.T) {
 	//        ((2 + 3 * 5 + 2 * 4 + 1 * 7 + 7 * 25 + 1 * 16 + 8 * 49 + 4 * 125 + 6 * 64 + 2 * 343) - 6) * appropriate x^2 == 2179 * appropriate x^2
 	//        ((2 + 3 * 8 + 2 * 1 + 1 * 4 + 7 * 64 + 1 * 1 + 8 * 16 + 4 * 512 + 6 * 1 + 2 * 64) - 3) * appropriate x^3] == 2788 * appropriate x^3
 
-	d_bias, d_coefficients := p.derivativeOfCostFunction(features, values, 0)
+	_, d_bias, d_coefficients := p.Cost(features, values, 0)
 
 	assert.Equal(t, 2836.6666666666665, d_bias)
 	assert.Equal(t, 652086.6666666666, d_coefficients[2][1])
 
 	// Here the lambda used for regularization is not 0 any more
 	// 1/3 * [Sigma part + lambda * appropriate coefficient]
-	d_bias, d_coefficients = p.derivativeOfCostFunction(features, values, 2)
+	_, d_bias, d_coefficients = p.Cost(features, values, 2)
 	assert.Equal(t, 2836.6666666666665, d_bias)
 	assert.Equal(t, 652090.6666666666, d_coefficients[2][1])
 }

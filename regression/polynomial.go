@@ -25,46 +25,91 @@ func (p *Polynomial) Train(features [][]float64, values []float64, degree int, l
 	// length of features[0] shows the number of variables
 	p.setRandomVariables(degree, len(features[0]))
 
+	prevCost := math.MaxFloat64
 	for i = 0; i < steps; i++ {
-		d_bias, d_coefficients := p.gradientDescent(features, values, learningRate, lambda)
+		cost, d_bias, d_coefficients := p.gradientDescent(features, values, learningRate, lambda)
 		dSum = math.Abs(d_bias)
 		for _, c := range d_coefficients {
 			for _, d := range c {
 				dSum += math.Abs(d)
 			}
 		}
-		if dSum < tolerance {
+		dCost := math.Abs(cost - prevCost)
+		if dCost < tolerance {
 			break
 		}
+		prevCost = cost
 	}
 	return
 }
 
-func (p *Polynomial) derivativeOfCostFunction(features [][]float64, values []float64, lambda float64) (float64, [][]float64) {
+// Cost computes the cost and derivatives of the cost function with
+// respect to the model parameters (coefficients and bias).
+//
+// In gradient descent, we want to minimize the cost function.  The
+// cost function is defined as:
+//
+//	1/2m * sum((h(x) - y)^2) + lambda * sum(c^2)
+//
+// ...where m is the number of training examples, h(x) is the
+// predicted value, y is the actual value, lambda is the
+// regularization parameter, and c is a coefficient.  The first term
+// is the mean squared error and the second term is the regularization
+// term.  The regularization term is used to prevent overfitting.
+//
+// Using the chain rule, we can compute the derivative of the cost
+// function with respect to the bias and coefficients.  The chain
+// rule states that the derivative of a function f(g(x)) is:
+//
+//	f'(g(x)) * g'(x)
+//
+// The derivative of the cost function with respect to the bias is:
+//
+//	2 * 1/2m * sum((h(x) - y)^2)
+//
+//	1/m * sum(h(x) - y)
+//
+// The derivative of the cost function with respect to the
+// coefficients is:
+//
+//	1/m * sum((h(x) - y) * x).
+func (p *Polynomial) Cost(features [][]float64, values []float64, lambda float64) (cost float64, d_bias float64, derivatives [][]float64) {
 	m := len(features)
 
-	sigma := float64(0)
+	// Compute predictions, errors, and the sum of the squared errors (cost).
+	predictions := make([]float64, m)
+	errors := make([]float64, m)
 	for i := 0; i < m; i++ {
 		fs := features[i]
 		predicted := p.Predict(fs)
-		sigma += predicted - values[i]
-		// Assert(!math.IsNaN(sigma), Spf("sigma is NaN, features: %v, value: %f, predicted: %f", fs, values[i], predicted))
-		// Assert(!math.IsInf(sigma, 0), Spf("sigma is Inf, features: %v, value: %f, predicted: %f", fs, values[i], predicted))
+		predictions[i] = predicted
+		errors[i] = predicted - values[i]
+		cost += math.Pow(errors[i], 2)
 	}
 
-	d_bias := float64(1) / float64(m) * sigma
+	// Compute the derivative of the bias cost function.
+	sigma := float64(0)
+	for i := 0; i < m; i++ {
+		// The derivative of x^2 is 2x, which can be cancelled out by
+		// multiplying the learning rate by 1/2.
+		sigma += errors[i]
+	}
+	d_bias = float64(1) / float64(m) * sigma
 
-	// Assert(!math.IsNaN(d_bias), Spf("d_bias is NaN, sigma: %f", sigma))
-	// Assert(!math.IsInf(d_bias, 0), Spf("d_bias is Inf, sigma: %f", sigma))
-
-	derivatives := make([][]float64, len(p.Coefficients))
-
+	// Compute the derivatives of the coefficient costs.
+	derivatives = make([][]float64, len(p.Coefficients))
+	// k is the degree of the coefficient.
 	for k, _ := range derivatives {
 		d := make([]float64, len(p.Coefficients[0]))
+		// j is the feature index.
 		for j := range d {
 			sigma := float64(0)
+			// i is the index of the training example.
 			for i := 0; i < m; i++ {
-				sigma += (p.Predict(features[i]) - values[i]) * math.Pow(features[i][j], float64(k+1))
+				// calculate the derivative of the cost function with
+				// respect to the coefficient.
+				feature := features[i][j]
+				sigma += errors[i] * math.Pow(feature, float64(k+1))
 			}
 			// Lambda is a regularization parameter in machine
 			// learning and statistics which, when added, can help to
@@ -84,7 +129,7 @@ func (p *Polynomial) derivativeOfCostFunction(features [][]float64, values []flo
 		derivatives[k] = d
 	}
 
-	return d_bias, derivatives
+	return
 }
 
 func (p *Polynomial) Predict(features []float64) float64 {
@@ -119,8 +164,8 @@ func (p *Polynomial) setRandomVariables(degree int, numOfVariables int) {
 	p.Coefficients = coefficients
 }
 
-func (p *Polynomial) gradientDescent(features [][]float64, values []float64, learningRate float64, lambda float64) (d_bias float64, d_coefficients [][]float64) {
-	d_bias, d_coefficients = p.derivativeOfCostFunction(features, values, lambda)
+func (p *Polynomial) gradientDescent(features [][]float64, values []float64, learningRate float64, lambda float64) (cost float64, d_bias float64, d_coefficients [][]float64) {
+	cost, d_bias, d_coefficients = p.Cost(features, values, lambda)
 	p.Bias -= learningRate * d_bias
 	if math.IsNaN(p.Bias) || math.IsInf(p.Bias, 0) {
 		p.Bias = rand.Float64()
